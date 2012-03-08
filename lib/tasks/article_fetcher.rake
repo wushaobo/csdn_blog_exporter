@@ -25,8 +25,7 @@ class Article
   end
   
   def to_s
-    # "#{title}\n#{url}\n#{content}"
-    "#{title}\n#{url}"
+    "#{title}\n#{url}\n#{content}"
   end
   
   def valid?
@@ -61,19 +60,25 @@ namespace :article_fetcher do
   include Helper
   
   desc "fetch all article from the blog"
-  task :blog do
-    page_index = 1
-    begin
-      page = html_document article_list_page_url(page_index)
-      collect_articles page
-      page_index = page_index.next
-    end while page_index <= last_page_index(page)
-    
+  task :blog, :author do |t, args|
+    unless args[:author]
+      raise "rake article_fetcher:blog[author] # Invalid command. Please provide the author name."
+    end
+    collect_all_articles args[:author]
     article_list.show
   end
+
+  def collect_all_articles author
+    page_index = 1
+    begin
+      doc = html_document article_list_page_url(page_index, author)
+      collect_articles_in_page doc
+      page_index = page_index.next
+    end while page_index <= last_page_index(doc)
+  end
   
-  def article_list_page_url page_index
-    "#{root}/shaobo_wu/article/list/#{page_index}"
+  def article_list_page_url page_index, author
+    "#{root}/#{author}/article/list/#{page_index}"
   end
   
   def last_page_index doc
@@ -82,7 +87,7 @@ namespace :article_fetcher do
     @last_page_index = last_page_url.split('/').last.to_i
   end
   
-  def collect_articles doc
+  def collect_articles_in_page doc
     doc.css('h3 a').each do |link|
       title = link.content.strip
       url = link.attributes["href"].value
