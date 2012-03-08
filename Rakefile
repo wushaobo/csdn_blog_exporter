@@ -1,0 +1,1 @@
+load "lib/tasks/article_fetcher.rake"
