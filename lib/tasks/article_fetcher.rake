@@ -1,4 +1,3 @@
-require 'ap'
 require 'open-uri'
 require 'nokogiri'
 
@@ -15,27 +14,33 @@ module Helper
 end
 
 class Article
-  attr_reader :title, :url, :content
+  attr_reader :title, :url
   include Helper
   
   def initialize(title, url)
     @title = title
     @url = url
-    @content = fetch_content
+  end
+
+  def content
+    @content ||= document.search('#article_content').inner_html
+  end
+  
+  def postdate
+    @postdate ||= document.search('.link_postdate').text
   end
   
   def to_s
-    "#{title}\n#{url}\n#{content}"
+    "#{postdate}   #{title}"
   end
   
   def valid?
-    title && url && content
+    title && url && document
   end
 
   private
-  def fetch_content
-    doc = html_document "#{root}#{url}"
-    doc.search('#article_content').inner_html
+  def document
+    @doc ||= html_document "#{root}#{url}"
   end
 end
 
@@ -51,7 +56,7 @@ class ArticleList
   def show
     puts "#{@articles.size} articles in total:"
     @articles.collect do |article|
-      puts "  #{article.title}"
+      puts "#{article.to_s}"
     end
   end
 end
