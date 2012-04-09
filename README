@@ -1,0 +1,3 @@
+Ruby script to export all the articles of a csdn blogger. 
+The html files will be saved in a directory named by the blogger's name. 
+These html files could be used to easily migrate into wordpress with a plugin called "html import".
