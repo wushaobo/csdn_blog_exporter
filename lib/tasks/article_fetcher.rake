@@ -85,13 +85,21 @@ class ArticleList
   def save_to_file article, dir
     begin
       Dir.chdir dir
-      file = File.new(article.to_s, 'w')
-      file.write article.content
+      file = File.new("#{article.to_s}.html", 'w')
+      file.write html_template(article)
       file.close
       puts "[Done] #{article.to_s}"
     rescue
       puts "[Failed] #{article.to_s}"
     end
+  end
+  
+  def html_template article
+    "<!DOCTYPE html>
+    <html><body>
+    <title>#{article.title}</title>
+    <div>#{article.content}</div>
+    </body></html>"
   end
 end
 
