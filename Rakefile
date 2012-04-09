@@ -1,1 +1,1 @@
-load "lib/tasks/article_fetcher.rake"
+load "lib/tasks/blog.rake"
