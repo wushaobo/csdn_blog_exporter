@@ -1,5 +1,6 @@
 require 'open-uri'
 require 'nokogiri'
+require 'fileutils'
 
 module Helper
   def root
@@ -35,7 +36,7 @@ class Article
   end
   
   def valid?
-    title && url && document
+    title && url
   end
 
   private
@@ -45,7 +46,8 @@ class Article
 end
 
 class ArticleList
-  def initialize
+  def initialize author
+    @author = author
     @articles = []
   end
   
@@ -53,10 +55,42 @@ class ArticleList
     @articles << article if article.valid?
   end
   
+  # removing this method because of no usage
   def show
     puts "#{@articles.size} articles in total:"
-    @articles.collect do |article|
+    @articles.each do |article|
       puts "#{article.to_s}"
+    end
+  end
+  
+  def save_to_files
+    dir = create_folder if @articles.size > 0
+    @articles.each do |article|
+      puts "saving... #{article.to_s}"
+      save_to_file article, dir
+    end
+  end
+  
+  private
+  
+  def create_folder
+    # Dir.chdir "~/downloads"
+    Dir.chdir "/Users/wushaobo/Works/Ruby/nokogiri"
+    FileUtils.rm_rf @author
+    Dir.mkdir @author
+    Dir.chdir @author
+    Dir.pwd
+  end
+  
+  def save_to_file article, dir
+    begin
+      Dir.chdir dir
+      file = File.new(article.to_s, 'w')
+      file.write article.content
+      file.close
+      puts "[Done] #{article.to_s}"
+    rescue
+      puts "[Failed] #{article.to_s}"
     end
   end
 end
@@ -66,20 +100,22 @@ namespace :article_fetcher do
   
   desc "fetch all article from the blog"
   task :blog, :author do |t, args|
-    unless args[:author]
+    author = args[:author]
+    unless author
       raise "rake article_fetcher:blog[author] # Invalid command. Please provide the author name."
     end
-    collect_all_articles args[:author]
-    article_list.show
+    article_list = collect_all_articles author, ArticleList.new(author)
+    article_list.save_to_files
   end
 
-  def collect_all_articles author
+  def collect_all_articles author, article_list
     page_index = 1
     begin
       doc = html_document article_list_page_url(page_index, author)
-      collect_articles_in_page doc
+      collect_articles_in_page doc, article_list
       page_index = page_index.next
     end while page_index <= last_page_index(doc)
+    article_list
   end
   
   def article_list_page_url page_index, author
@@ -92,16 +128,12 @@ namespace :article_fetcher do
     @last_page_index = last_page_url.split('/').last.to_i
   end
   
-  def collect_articles_in_page doc
+  def collect_articles_in_page doc, article_list
     doc.css('h3 a').each do |link|
       title = link.content.strip
       url = link.attributes["href"].value
       article_list.add(Article.new(title, url))
     end
-  end
-  
-  def article_list
-    @article_list ||= ArticleList.new
   end
 end
 
