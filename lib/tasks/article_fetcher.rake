@@ -66,7 +66,6 @@ class ArticleList
   def save_to_files
     dir = create_folder if @articles.size > 0
     @articles.each do |article|
-      puts "saving... #{article.to_s}"
       save_to_file article, dir
     end
   end
@@ -74,8 +73,6 @@ class ArticleList
   private
   
   def create_folder
-    # Dir.chdir "~/downloads"
-    Dir.chdir "/Users/wushaobo/Works/Ruby/nokogiri"
     FileUtils.rm_rf @author
     Dir.mkdir @author
     Dir.chdir @author
@@ -83,14 +80,15 @@ class ArticleList
   end
   
   def save_to_file article, dir
+    puts "[Saving]  #{article.to_s}"
     begin
       Dir.chdir dir
       file = File.new("#{article.to_s}.html", 'w')
       file.write html_template(article)
       file.close
-      puts "[Done] #{article.to_s}"
+      puts "[Done]"
     rescue
-      puts "[Failed] #{article.to_s}"
+      puts "[Failed]"
     end
   end
   
